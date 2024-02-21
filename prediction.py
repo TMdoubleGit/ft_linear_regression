@@ -11,9 +11,16 @@ def original_data(norm_data, min, max):
     return (norm_data * (max - min) + min)
 
 
+def coef_determination(y, predictions):
+    u = ((y - predictions)**2).sum()
+    v = ((y - y.mean())**2).sum()
+    return (1 - u / v)
+
+
 def predict():
     try:
         theta_final = joblib.load("theta_final.pkl")
+        predictions = joblib.load("predictions.pkl")
     except FileNotFoundError as e:
         print(e)
         print("Please launch the training program first !")
@@ -22,6 +29,8 @@ def predict():
     data = pd.read_csv("data.csv")
     x = data['km'].values.reshape(-1, 1)
     y = data['price'].values.reshape(-1, 1)
+
+    norm_y = normalize_data(y, np.min(y), np.max(y))
 
     mileage = -1
     while (mileage < 0):
@@ -41,6 +50,8 @@ def predict():
         round(original_data(norm_est_prize, np.min(y), np.max(y)), 2)
 
     print(f"Best I can do is {estimated_price}$!")
+    coef = round(coef_determination(norm_y, predictions), 2)
+    print(f"The precision of the algorithm is {coef}")
 
 
 if __name__ == "__main__":

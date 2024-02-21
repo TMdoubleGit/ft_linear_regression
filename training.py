@@ -59,6 +59,7 @@ def training():
     plt.show()
 
     joblib.dump(theta_final, "theta_final.pkl")
+    joblib.dump(predictions, "predictions.pkl")
 
 
 if __name__ == "__main__":
