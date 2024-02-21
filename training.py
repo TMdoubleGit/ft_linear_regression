@@ -1,33 +1,65 @@
 import numpy as np
-from sklearn.datasets import make_regression
+import pandas as pd
+import joblib
 import matplotlib.pyplot as plt
 
-x , y = make_regression(n_samples= 100, n_features=1, noise=10)
-y = y.reshape(y.shape[0], 1)
 
-X = np.hstack((x, np.ones(x.shape)))
+def normalize_data(data, min, max):
+    return ((data - min) / (max - min))
 
-theta = np.random.randn(2, 1)
+
+def original_data(norm_data, min, max):
+    return (norm_data * (max - min) + min)
+
 
 def model(X, theta):
     return X.dot(theta)
 
-def cost_function(X, y, theta):
-    m = len(y)
-    return (1/(2 * m) *np.sum((model(X, theta) - y)**2))
 
 def grad(X, y, theta):
     m = len(y)
     return (1/m * X.T.dot(model(X, theta) - y))
+
 
 def gradient_descent(X, y, theta, learning_rate, n_iteration):
     for i in range(0, n_iteration):
         theta = theta - learning_rate * grad(X, y, theta)
     return theta
 
-theta_final = gradient_descent(X, y, theta, learning_rate=0.01, n_iteration=10000)
 
-predictions = model(X, theta_final)
-plt.scatter(x, y)
-plt.plot(x, predictions, c='r')
-plt.show()
+def training():
+    data = pd.read_csv("data.csv")
+    x = data['km'].values.reshape(-1, 1)
+    y = data['price'].values.reshape(-1, 1)
+
+    norm_x = normalize_data(x, np.min(x), np.max(x))
+    norm_y = normalize_data(y, np.min(y), np.max(y))
+
+    X = np.hstack((norm_x, np.ones(norm_x.shape)))
+
+    theta = np.zeros((2, 1))
+
+    theta_final = \
+        gradient_descent(X, norm_y, theta,
+                         learning_rate=0.001, n_iteration=100000)
+
+    predictions = model(X, theta_final)
+
+    plt.scatter(norm_x, norm_y)
+    plt.plot(norm_x, predictions, c='r')
+
+    plt.xlabel("Mileage (km)")
+    plt.xticks([0, 0.2, 0.4, 0.6, 0.8, 1],
+               ["0", "50k", "100k", "150k", "200k", "250k"])
+
+    plt.ylabel("Price ($)")
+    plt.yticks([0, 0.2, 0.4, 0.6, 0.8, 1],
+               ["0", "1700", "3400", "5100", "6800", "8500"])
+
+    plt.show()
+
+    joblib.dump(theta_final, "theta_final.pkl")
+
+
+if __name__ == "__main__":
+    training()
